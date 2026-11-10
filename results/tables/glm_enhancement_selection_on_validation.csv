@@ -1,0 +1,6 @@
+candidate,parameters,validation_poisson_deviance_x100
+Base GLM,51,23.92622150280937
++ driver age x bonus-malus,57,23.92739279216799
++ non-linear shapes,55,23.845420083145402
++ shapes + driver age x bonus-malus,61,23.838454743801435
++ shapes + both interactions,82,23.798113452006422

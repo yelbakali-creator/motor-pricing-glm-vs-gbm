@@ -26,6 +26,20 @@ A complete motor third-party liability pricing study on **freMTPL2**, the refere
 - **The GLM keeps most of the value.** It captures two-thirds of the GBM's deviance reduction (4.0% of 6.1%) with a tariff of 51 transparent factors that an underwriter, a regulator or a customer can understand.
 - **SHAP closes part of the gap.** The GBM shows where the GLM is too simple. Adding what it reveals (non-linear bonus-malus and density, interactions of bonus-malus with driver age and region) closes 30 to 40% of the gap while remaining a GLM. This is how modern pricing teams use machine learning: to improve the tariff, not to replace it blindly.
 
+### How the enhanced GLM was chosen (without touching the test set)
+
+Candidate enhancements were compared on a validation split carved out of the training data (the same split used for the GBM's early stopping). The test set was used only once, for the final comparison.
+
+| Candidate | Parameters | Validation deviance (x100) |
+|---|---|---|
+| Base GLM | 51 | 23.926 |
+| + driver age x bonus-malus | 57 | 23.927 |
+| + non-linear shapes (bonus-malus, density) | 55 | 23.845 |
+| + shapes + driver age x bonus-malus | 61 | 23.839 |
+| **+ shapes + both interactions (selected)** | 82 | **23.798** |
+
+The strongest SHAP interaction does not help **on its own**: most of the gain comes from the non-linear shapes, and the interactions only add value once those shapes are in the model. A SHAP interaction is a hint about where to look, not a ready-made GLM term.
+
 ## Validation
 
 | Check | Result |
@@ -35,6 +49,7 @@ A complete motor third-party liability pricing study on **freMTPL2**, the refere
 | Severity GLM (Gamma) coefficients vs statsmodels | max difference 9.1e-13 |
 | Balance property, Poisson GLM on training data | 21,076 predicted = 21,076 observed |
 | Calibration on the test set (predicted / actual claims) | 99.5% (GLM), 99.6% (GBM) |
+| Model selection | Enhancements chosen on a validation split; the test set is used once, at the end |
 | Pure premium on capped claim amounts (predicted / actual) | 103% |
 
 **Three findings from the validation work:**

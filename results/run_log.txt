@@ -10,6 +10,15 @@ Max |standard error difference| vs statsmodels 1.455825e-10
           GBM boosting rounds (early stopping) 7.360000e+02
 Severity GLM max |coef diff| vs statsmodels: 9.06e-13 | large-loss loading: 1.3294
 
+GLM enhancement selection (validation split)
+                          candidate  parameters  validation_poisson_deviance_x100
+                           Base GLM          51                           23.9262
+         + driver age x bonus-malus          57                           23.9274
+                + non-linear shapes          55                           23.8454
++ shapes + driver age x bonus-malus          61                           23.8385
+       + shapes + both interactions          82                           23.7981
+Selected: + shapes + both interactions
+
 Frequency models (test set)
                           model  parameters  test_poisson_deviance_x100   gini  predicted_over_actual  deviance_reduction_vs_homogeneous
 Homogeneous (no rating factors)         1.0                     25.3948 0.0141                 0.9957                             0.0000

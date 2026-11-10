@@ -23,8 +23,15 @@ plt.rcParams.update({"font.size": 10, "axes.spines.top": False, "axes.spines.rig
 SEED = 2026
 CAT = ["DrivAgeBand", "VehAgeBand", "VehPowerCat", "VehBrand", "VehGas", "Region"]
 CONT = ["BonusMalusC", "LogDensity", "AreaCode"]
-CONT_ENHANCED = CONT + ["BonusMalusLog", "BonusMalusOver100", "BonusMalusMin", "LogDensitySq"]
-INTERACTIONS = [("DrivAgeBand", "BonusMalusC"), ("Region", "BonusMalusC")]
+SHAPE_TERMS = ["BonusMalusLog", "BonusMalusOver100", "BonusMalusMin", "LogDensitySq"]
+# Candidate GLM enhancements suggested by SHAP; the choice is made on a validation split, never on the test set
+CANDIDATES = {
+    "Base GLM": (CONT, []),
+    "+ driver age x bonus-malus": (CONT, [("DrivAgeBand", "BonusMalusC")]),
+    "+ non-linear shapes": (CONT + SHAPE_TERMS, []),
+    "+ shapes + driver age x bonus-malus": (CONT + SHAPE_TERMS, [("DrivAgeBand", "BonusMalusC")]),
+    "+ shapes + both interactions": (CONT + SHAPE_TERMS, [("DrivAgeBand", "BonusMalusC"), ("Region", "BonusMalusC")]),
+}
 GBM_FEATURES = ["DrivAge", "VehAge", "VehPower", "BonusMalusC", "LogDensity", "AreaCode",
                 "VehBrand", "VehGas", "Region"]
 SEV_CAT, SEV_CONT = ["DrivAgeBand", "VehAgeBand", "VehGas"], ["BonusMalusC", "AreaCode"]
@@ -74,9 +81,22 @@ def main():
     top_pairs = (pairs.where(np.triu(np.ones(pairs.shape), 1).astype(bool)).stack()
                  .sort_values(ascending=False).head(5))
 
-    # 4. GBM-informed GLM: non-linear bonus-malus and density shapes, plus the SHAP interactions
-    Xtr2, Xte2 = design_matrix(tr, CAT, CONT_ENHANCED, INTERACTIONS), design_matrix(te, CAT, CONT_ENHANCED, INTERACTIONS)
-    glm2 = fit_glm(Xtr2.values, tr["ClaimNb"].values, off_tr)
+    # 4. GBM-informed GLM: candidates compared on the validation split (the GBM's early-stopping split)
+    fit_part, val_part = tr[~val], tr[val]
+    selection = []
+    for name, (cont, inter_terms) in CANDIDATES.items():
+        Xf = design_matrix(fit_part, CAT, cont, inter_terms)
+        Xv = design_matrix(val_part, CAT, cont, inter_terms)
+        g = fit_glm(Xf.values, fit_part["ClaimNb"].values, off_tr[~val])
+        mu_v = np.exp(Xv.values @ g["beta"] + off_tr[val])
+        selection.append({"candidate": name, "parameters": Xf.shape[1],
+                          "validation_poisson_deviance_x100": poisson_deviance(val_part["ClaimNb"].values, mu_v)})
+    selection = pd.DataFrame(selection)
+    selection.to_csv(TABLES / "glm_enhancement_selection_on_validation.csv", index=False)
+    best = selection.loc[selection["validation_poisson_deviance_x100"].idxmin(), "candidate"]
+    cont_best, inter_best = CANDIDATES[best]
+    Xtr2, Xte2 = design_matrix(tr, CAT, cont_best, inter_best), design_matrix(te, CAT, cont_best, inter_best)
+    glm2 = fit_glm(Xtr2.values, tr["ClaimNb"].values, off_tr)                 # refit on the full training set
     mu_glm2 = np.exp(Xte2.values @ glm2["beta"] + off_te)
 
     # 5. Frequency model comparison on the test set
@@ -209,6 +229,8 @@ def main():
     print(f"Policies: {len(df):,} | train {len(tr):,} | test {len(te):,} | claims {df['ClaimNb'].sum():,.0f}")
     print("\nValidation\n" + validation.to_string(index=False))
     print(f"Severity GLM max |coef diff| vs statsmodels: {sev_diff:.2e} | large-loss loading: {large_loading:.4f}")
+    print("\nGLM enhancement selection (validation split)\n" + selection.round(4).to_string(index=False))
+    print(f"Selected: {best}")
     print("\nFrequency models (test set)\n" + comp.round(4).to_string(index=False))
     print("\nSHAP importance\n" + importance.round(4).to_string())
     print("\nTop interactions\n" + top_pairs.round(4).to_string())
