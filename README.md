@@ -1,5 +1,7 @@
 # Motor Insurance Pricing: Poisson GLM vs Gradient Boosting, SHAP and a GBM-Informed GLM
 
+[![tests](https://github.com/yelbakali-creator/motor-pricing-glm-vs-gbm/actions/workflows/tests.yml/badge.svg)](https://github.com/yelbakali-creator/motor-pricing-glm-vs-gbm/actions/workflows/tests.yml)
+
 A complete motor third-party liability pricing study on **freMTPL2**, the reference public dataset for actuarial pricing (677,991 French policies, 26,405 claims, 358,000 years of exposure):
 
 1. **Frequency GLM** (Poisson, log link, exposure offset), fitted by IRLS from scratch and validated against statsmodels.
@@ -98,6 +100,7 @@ In the GLM, the youngest drivers show a relativity of only 1.07 against the 41-5
 
 ```bash
 pip install -r requirements.txt
+python -m pytest       # 3 automated validation tests
 python run_study.py
 ```
 
