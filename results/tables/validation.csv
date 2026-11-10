@@ -1,0 +1,7 @@
+check,value
+Max |coefficient difference| vs statsmodels,1.4507839374289233e-13
+Max |standard error difference| vs statsmodels,1.4558245581275386e-10
+Balance: predicted claims (train),21076.000000000007
+Balance: observed claims (train),21076.0
+IRLS iterations,8.0
+GBM boosting rounds (early stopping),736.0

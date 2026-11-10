@@ -1,0 +1,3 @@
+model,gini_on_claim_amounts,predicted_over_actual_amounts,predicted_over_actual_capped_amounts,share_of_amounts_above_cap_train,share_of_amounts_above_cap_test
+GLM frequency x GLM severity,0.2795977326788317,1.2889387689340748,1.0311696421599719,0.24778005781382273,0.05974205736101623
+GBM frequency x GLM severity,0.3147968509559923,1.290263025486566,1.03222906653937,0.24778005781382273,0.05974205736101623
